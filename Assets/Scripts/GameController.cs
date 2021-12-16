@@ -9,20 +9,25 @@ public class GameController : MonoBehaviour
     EnemyMissileSpawner myEnemyMissileSpawner;
 
     [SerializeField] private GameObject endOfRoundPanel;
+    [SerializeField] private GameObject newHighScorePanel;
+    [SerializeField] private TMP_InputField newHighScoreNickname;
     public int score = 0;
     public int level = 1;
     public int playerMissilesLeft = 30;
-    private int enemyMissilesLeftInRound = 0;
+    public int enemyMissilesLeftInRound = 0;
     private int enemyMissilesThisRound = 20;
-    private int missileDestroyedPoints = 15;
+    private int missileDestroyedPoints = 75;
     private bool isRoundOver = false;
     public float enemyMissileSpeed = 5f;
     public int currentMissilesLoadedInLauncher = 0;
     public int houseNumber = 0;
+    public bool isGameOver = false;
+    private MenuManager myMenuManager;
+    private ScoreManager myScoreManager;
     [SerializeField] private float enemyMissleSpeedMultiplier = 0.2f;
-    [SerializeField] private int missileEndOfRoundPoints = 3;
+    [SerializeField] private int missileEndOfRoundPoints = 20;
     
-    [SerializeField] private int housesEndOfRoundPoints = 30;
+    [SerializeField] private int housesEndOfRoundPoints = 100;
     [SerializeField] private TextMeshProUGUI scoreText;
     [SerializeField] private TextMeshProUGUI levelText;
     [SerializeField] private TextMeshProUGUI missileLeftText;
@@ -35,11 +40,14 @@ public class GameController : MonoBehaviour
 
     void Start()
     {
+        Time.timeScale = 1f;
         currentMissilesLoadedInLauncher = 10;
         playerMissilesLeft -= 10;
 
         myEnemyMissileSpawner = GameObject.FindObjectOfType<EnemyMissileSpawner>();
         houseNumber = GameObject.FindGameObjectsWithTag("Houses").Length - 1;
+        myMenuManager = GameObject.FindObjectOfType<MenuManager>();
+        myScoreManager = GameObject.FindObjectOfType<ScoreManager>();
         
         UpdateMissilesLeft();
         UpdateScore();
@@ -51,15 +59,30 @@ public class GameController : MonoBehaviour
 
     void Update()
     {
-        if(enemyMissilesLeftInRound < 0 && !isRoundOver)
-        {
-            isRoundOver = true;
-            StartCoroutine(EndOfRound());
-        }
         if(houseNumber <=0)
         {
-            SceneManager.LoadScene("GameOver");
+            isGameOver = true;
+            Time.timeScale = 0.001f;
+            if(myScoreManager.isThisANewHighScore(score)){
+                newHighScorePanel.SetActive(true);
+                
+            }
+            else {
+                SceneManager.LoadScene("GameOver");
+            }
+            
         }
+        if(enemyMissilesLeftInRound <= 0 && !isRoundOver && !isGameOver)
+        {
+            EnemyMissile[] m = GameObject.FindObjectsOfType<EnemyMissile>();
+            if (m.Length == 0)
+            {
+                isRoundOver = true;
+                StartCoroutine(EndOfRound());
+            }
+            
+        }
+        
     }
 
     public void UpdateMissilesLeft(){
@@ -172,8 +195,17 @@ public class GameController : MonoBehaviour
         currentMissilesLoadedInLauncher = 10;
         playerMissilesLeft -= 10;
 
+        level++;
+
         StartRound();
         UpdateLevel();
         UpdateMissilesLeft();
+    }
+
+    public void SubmitClicked(){
+
+        myScoreManager.AddNewHighscore(new HighScoreEntry{ score = this.score, name = newHighScoreNickname.text});
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("MainMenu");
     }
 }

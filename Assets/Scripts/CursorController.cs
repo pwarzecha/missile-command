@@ -23,7 +23,7 @@ public class CursorController : MonoBehaviour
  
     void Update()
     {
-            if (Input.GetMouseButton(0) && myGameController.currentMissilesLoadedInLauncher > 0)
+            if (Input.GetMouseButton(0) && myGameController.currentMissilesLoadedInLauncher > 0 && !myGameController.isGameOver)
             {
                 if (flag)
                 {
@@ -35,6 +35,7 @@ public class CursorController : MonoBehaviour
     }
 
     IEnumerator Wait(){
+        FindObjectOfType<AudioManager>().PlaySound("shoot");
         Instantiate(missilePrefab, missileLauncherPrefab.transform.position, Quaternion.identity);
         myGameController.PlayerFiredMissle();
         yield return new WaitForSeconds(0.2f);
